@@ -12,7 +12,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 
-#include "dataStructures.h"
+#include "ttc_measurement/dataStructures.h"
 
 void cropLidarPoints(std::vector<LidarPoint> &lidarPoints, float minX, float maxX, float maxY, float minZ, float maxZ, float minR);
 void loadLidarFromFile(std::vector<LidarPoint> &lidarPoints, std::string filename);

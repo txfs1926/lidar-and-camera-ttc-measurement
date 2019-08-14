@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <vector>
 #include <opencv2/core.hpp>
-#include "dataStructures.h"
+#include "ttc_measurement/dataStructures.h"
 
 
 void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<LidarPoint> &lidarPoints, float shrinkFactor, cv::Mat &P_rect_xx, cv::Mat &R_rect_xx, cv::Mat &RT);

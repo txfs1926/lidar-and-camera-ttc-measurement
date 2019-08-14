@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy sensor_msgs std_msgs genmsg
 generate_messages(DEPENDENCIES std_msgs sensor_msgs)
 
 ## Declare a catkin package
-catkin_package()
+catkin_package(INCLUDE_DIRS include)
 
 ## Build talker and listener
 include_directories(include ${catkin_INCLUDE_DIRS})

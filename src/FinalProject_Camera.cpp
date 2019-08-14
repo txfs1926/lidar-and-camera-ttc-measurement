@@ -18,11 +18,11 @@
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
 
-#include "dataStructures.h"
-#include "matching2D.hpp"
-#include "objectDetection2D.hpp"
-#include "lidarData.hpp"
-#include "camFusion.hpp"
+#include "ttc_measurement/dataStructures.h"
+#include "ttc_measurement/matching2D.hpp"
+#include "ttc_measurement/objectDetection2D.hpp"
+#include "ttc_measurement/lidarData.hpp"
+#include "ttc_measurement/camFusion.hpp"
 
 using namespace std;
 
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     string descriptorName = "SIFT"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
 
     // object detection
-    string yoloBasePath = dataPath + "dat/yolo/";
+    string yoloBasePath = "/home/txfs1926/ttc_ws/src/ttc_measurement/dat/yolo/";//dataPath + "dat/yolo/";
     string yoloClassesFile = yoloBasePath + "coco.names";
     string yoloModelConfiguration = yoloBasePath + "yolov3.cfg";
     string yoloModelWeights = yoloBasePath + "yolov3.weights";
@@ -297,12 +297,13 @@ int main(int argc, char *argv[])
                         char str[200];
                         sprintf(str, "TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
                         putText(visImg, str, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
+                        ROS_INFO("TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
 
                         string windowName = "Final Results : TTC";
                         cv::namedWindow(windowName, 4);
                         cv::imshow(windowName, visImg);
                         ROS_INFO("Press key to continue to next frame");
-                        cv::waitKey(0);
+                        cv::waitKey(0); // if (cv::waitKey(10) >= 0) break;
                     }
                     bVis = false;
 

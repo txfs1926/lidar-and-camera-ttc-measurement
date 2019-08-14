@@ -5,8 +5,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "camFusion.hpp"
-#include "dataStructures.h"
+#include "ttc_measurement/camFusion.hpp"
+#include "ttc_measurement/dataStructures.h"
 
 using namespace std;
 

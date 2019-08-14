@@ -16,7 +16,7 @@
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/xfeatures2d/nonfree.hpp>
 
-#include "dataStructures.h"
+#include "ttc_measurement/dataStructures.h"
 
 
 void detKeypointsHarris(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, double &time, bool bVis=false);
