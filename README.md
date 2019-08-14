@@ -16,10 +16,16 @@
   * Linux: gcc / g++ is installed by default on most Linux distros
   * Mac: same deal as make - [install Xcode command line tools](https://developer.apple.com/xcode/features/)
   * Windows: recommend using [MinGW](http://www.mingw.org/)
+* ROS
+  * All OSes: [click here for installation instructions](http://wiki.ros.org/ROS/Installation)
   
 ## Device
 * Camera
 * LiDAR
   
 ## Usage
-  `rosrun ttc_measurement ttc_measurement`
+Note that the weight file under folder dat/yolo/ is a dummy file. Open `dat/yolo/yolo.weight` via your code editor and follow the procedure to download the true pre-trained weight.
+
+Then run:
+
+  ```rosrun ttc_measurement ttc_measurement```
