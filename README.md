@@ -17,7 +17,7 @@
   * Mac: same deal as make - [install Xcode command line tools](https://developer.apple.com/xcode/features/)
   * Windows: recommend using [MinGW](http://www.mingw.org/)
 * ROS
-  * All OSes: [click here for installation instructions](http://wiki.ros.org/ROS/Installation)
+  * All OSes: [click here for installation instructions](http://wiki.ros.org/ROS/Installation) (ROS Kinetic is recommended)
   
 ## Device
 * Camera
@@ -25,7 +25,19 @@
   
 ## Usage
 Note that the weight file under folder dat/yolo/ is a dummy file. Open `dat/yolo/yolo.weight` via your code editor and follow the procedure to download the true pre-trained weight.
-
+Make sure that USB camera and LiDAR are connected and LiDAR driver is working properly. (For 'lslidar_c16' please refer [the insturction](https://blog.csdn.net/learning_tortosie/article/details/84679149). In addition, edit `cv::VideoCapture cap(2);` to setup your camera.
 Then run:
 
-  ```rosrun ttc_measurement ttc_measurement```
+  ```
+  cd /path/to/your/workspace
+  mkdir src
+  cd src
+  git clone https://github.com/txfs1926/lidar-and-camera-ttc-measurement.git
+  cd ..
+  catkin_make
+  source devel/setup.bash
+  rosrun ttc_measurement ttc_measurement
+  ```
+
+## TODOs
+Please refer TODOs in source code files.
