@@ -25,7 +25,7 @@
   
 ## Usage
 Note that the weight file under folder dat/yolo/ is a dummy file. Open `dat/yolo/yolo.weight` via your code editor and follow the procedure to download the true pre-trained weight. 
-Make sure that USB camera and LiDAR are connected and LiDAR driver is working properly. (For 'lslidar_c16' please refer [the insturction](https://blog.csdn.net/learning_tortosie/article/details/84679149). In addition, edit `cv::VideoCapture cap(2);` to setup your camera.
+Make sure that USB camera and LiDAR are connected and LiDAR driver is working properly. (For `lslidar_c16` please refer [the insturction](https://blog.csdn.net/learning_tortosie/article/details/84679149). In addition, edit `cv::VideoCapture cap(2);` to setup your camera.
 
 Then run:
 
