@@ -19,6 +19,7 @@ void loadLidarFromFile(std::vector<LidarPoint> &lidarPoints, std::string filenam
 
 void showLidarTopview(std::vector<LidarPoint> &lidarPoints, cv::Size worldSize, cv::Size imageSize, bool bWait = true);
 void showLidarImgOverlay(cv::Mat &img, std::vector<LidarPoint> &lidarPoints, cv::Mat &P_rect_xx, cv::Mat &R_rect_xx, cv::Mat &RT, cv::Mat *extVisImg = nullptr);
+void showLidarImgOverlay(cv::Mat &img, std::vector<LidarPoint> &lidarPoints, const cv::Mat &cameraExtrinsicMat, const cv::Mat &cameraMat, const cv::Mat &distCoeff, const cv::Size &imageSize, cv::Mat *extVisImg);
 
 static inline bool convertPointCloud2ToLidarPoint(const sensor_msgs::PointCloud2 &input, std::vector<LidarPoint> &output)
 {
@@ -63,4 +64,5 @@ static inline bool convertPointCloud2ToLidarPoint(const sensor_msgs::PointCloud2
 }
 
 bool loadLidarFromMessage(std::vector<LidarPoint> &lidarPoints);
+
 #endif /* lidarData_hpp */

@@ -11,6 +11,23 @@
 using namespace std;
 
 
+// pc2i
+static cv::Mat invRt, invTt;
+static bool init_matrix = false;
+
+// void resetMatrix()
+// {
+//     init_matrix = false;
+// }
+
+void initMatrix(const cv::Mat &cameraExtrinsicMat)
+{
+    invRt = cameraExtrinsicMat(cv::Rect(0, 0, 3, 3));
+    cv::Mat invT = -invRt.t() * (cameraExtrinsicMat(cv::Rect(3, 0, 1, 3)));
+    invTt = invT.t();
+    init_matrix = true;
+}
+
 // Create groups of Lidar points whose projection into the camera falls into the same bounding box
 void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<LidarPoint> &lidarPoints, float shrinkFactor, cv::Mat &P_rect_xx, cv::Mat &R_rect_xx, cv::Mat &RT)
 {
@@ -60,6 +77,70 @@ void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<Li
     } // eof loop over all Lidar points
 }
 
+void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<LidarPoint> &lidarPoints, float shrinkFactor,
+                         const cv::Mat &cameraExtrinsicMat, const cv::Mat &cameraMat, const cv::Mat &distCoeff, const cv::Size &imageSize)
+{
+    cv::Mat point(1, 3, CV_64F);
+    cv::Point pt;
+
+    if (!init_matrix)
+    {
+        initMatrix(cameraExtrinsicMat);
+    }
+
+    for (auto it1 = lidarPoints.begin(); it1 != lidarPoints.end(); ++it1)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            point.at<double>(i) = invTt.at<double>(i);
+            point.at<double>(i) += it1->x * invRt.at<double>(0, i);
+            point.at<double>(i) += it1->y * invRt.at<double>(1, i);
+            point.at<double>(i) += it1->z * invRt.at<double>(2, i);
+        }
+
+        if (point.at<double>(2) <= 1)
+        {
+            continue;
+        }
+
+        double tmpx = point.at<double>(0) / point.at<double>(2);
+        double tmpy = point.at<double>(1) / point.at<double>(2);
+        double r2 = tmpx * tmpx + tmpy * tmpy;
+        double tmpdist = 1 + distCoeff.at<double>(0) * r2 + distCoeff.at<double>(1) * r2 * r2 + distCoeff.at<double>(4) * r2 * r2 * r2;
+
+        pt.x = tmpx * tmpdist + 2 * distCoeff.at<double>(2) * tmpx * tmpy + distCoeff.at<double>(3) * (r2 + 2 * tmpx * tmpx);
+        pt.y = tmpy * tmpdist + distCoeff.at<double>(2) * (r2 + 2 * tmpy * tmpy) + 2 * distCoeff.at<double>(3) * tmpx * tmpy;
+        pt.x = cameraMat.at<double>(0, 0) * pt.x + cameraMat.at<double>(0, 2);
+        pt.y = cameraMat.at<double>(1, 1) * pt.y + cameraMat.at<double>(1, 2);
+
+        // if(0 <= pt.x && pt.x < imageSize.width && 0 <= pt.y && pt.y < imageSize.height)
+        vector<vector<BoundingBox>::iterator> enclosingBoxes; // pointers to all bounding boxes which enclose the current Lidar point
+        for (vector<BoundingBox>::iterator it2 = boundingBoxes.begin(); it2 != boundingBoxes.end(); ++it2)
+        {
+            // shrink current bounding box slightly to avoid having too many outlier points around the edges
+            cv::Rect smallerBox;
+            smallerBox.x = (*it2).roi.x + shrinkFactor * (*it2).roi.width / 2.0;
+            smallerBox.y = (*it2).roi.y + shrinkFactor * (*it2).roi.height / 2.0;
+            smallerBox.width = (*it2).roi.width * (1 - shrinkFactor);
+            smallerBox.height = (*it2).roi.height * (1 - shrinkFactor);
+
+            // check wether point is within current bounding box
+            if (smallerBox.contains(pt))
+            {
+                enclosingBoxes.push_back(it2);
+            }
+
+        } // eof loop over all bounding boxes
+
+        // check wether point has been enclosed by one or by multiple boxes
+        if (enclosingBoxes.size() == 1)
+        { 
+            // add Lidar point to bounding box
+            enclosingBoxes[0]->lidarPoints.push_back(*it1);
+        }
+
+    }
+}
 
 void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, cv::Size imageSize, bool bWait)
 {
@@ -103,9 +184,9 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 
         // augment object with some key data
         char str1[200], str2[200];
-        sprintf(str1, "id=%d, #pts=%d", it1->boxID, (int)it1->lidarPoints.size());
+        std::sprintf(str1, "id=%d, #pts=%d", it1->boxID, (int)it1->lidarPoints.size());
         putText(topviewImg, str1, cv::Point2f(left-250, bottom+50), cv::FONT_ITALIC, 2, currColor);
-        sprintf(str2, "xmin=%2.2f m, yw=%2.2f m", xwmin, ywmax-ywmin);
+        std::sprintf(str2, "xmin=%2.2f m, yw=%2.2f m", xwmin, ywmax-ywmin);
         putText(topviewImg, str2, cv::Point2f(left-250, bottom+125), cv::FONT_ITALIC, 2, currColor);  
     }
 
