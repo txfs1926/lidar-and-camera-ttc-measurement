@@ -317,7 +317,8 @@ int main(int argc, char *argv[])
                         cv::namedWindow(windowName, 4);
                         cv::imshow(windowName, visImg);
                         ROS_INFO("Press key to continue to next frame");
-                        //cv::waitKey(0); // if (cv::waitKey(10) >= 0) break;
+                        //cv::waitKey(0); //
+                        if (cv::waitKey(1) >= 0) break;
                     }
                     bVis = false;
 
