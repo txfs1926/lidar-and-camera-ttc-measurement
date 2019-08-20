@@ -50,6 +50,8 @@ int main(int argc, char *argv[])
     string yoloClassesFile = yoloBasePath + "coco.names";
     string yoloModelConfiguration = yoloBasePath + "yolov3.cfg";
     string yoloModelWeights = yoloBasePath + "yolov3.weights";
+    float confThreshold = 0.2;
+    float nmsThreshold = 0.4; 
 
     // Lidar
 
@@ -74,7 +76,7 @@ int main(int argc, char *argv[])
     // misc
     double sensorFrameRate = 10.0 / imgStepWidth; // frames per second for Lidar and camera (10FPS -> delta_t = 0.1)
                                                   // TODO: replace this with real FPS
-    int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
+    int dataBufferSize = 3;       // no. of images which are held in memory (ring buffer) at the same time
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
     bool bVis = false;            // visualize results
     double tDetector = 0, tDescriptor = 0;
@@ -102,24 +104,6 @@ int main(int argc, char *argv[])
 
         ROS_INFO("#1 : LOAD IMAGE INTO BUFFER done");
 
-
-        /* DETECT & CLASSIFY OBJECTS */
-
-        float confThreshold = 0.2;
-        float nmsThreshold = 0.4;        
-        detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
-                      yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis);
-        if ((dataBuffer.end() - 1)->boundingBoxes.empty())
-        {
-            ROS_WARN("#2 : NO AVALIABLE BOUNDING BOXES ARE DETECTED!");
-            dataBuffer.clear();
-            continue;
-        }
-        
-
-        ROS_INFO("#2 : DETECT & CLASSIFY OBJECTS done");
-
-
         /* CROP LIDAR POINTS */
 
         // load 3D Lidar points from ros topic
@@ -128,18 +112,40 @@ int main(int argc, char *argv[])
         bool loaded = loadLidarFromMessage(lidarPoints);
         if (!loaded)
         {
-            ROS_ERROR("#3 : Could not get any lidar points!");
+            ROS_ERROR("#2 : Could not get any lidar points!");
             return -1;
         }
 
         // remove Lidar points based on distance properties
+        // TODO: try some ranges
         float minZ = -1.5, maxZ = -0.9, minX = 2.0, maxX = 20.0, maxY = 2.0, minR = 0.1; // focus on ego lane
-        cropLidarPoints(lidarPoints, minX, maxX, maxY, minZ, maxZ, minR);
-    
+
+        //cropLidarPoints(lidarPoints, minX, maxX, maxY, minZ, maxZ, minR);
+        // restart program if no enough lidar points after cropped
+        if (lidarPoints.size() < 10)
+        {
+            ROS_WARN("#2 : NO ENOUGH LIDAR POINTS AVALIABLE !");
+            dataBuffer.clear();
+            continue;
+        }
         (dataBuffer.end() - 1)->lidarPoints = lidarPoints;
 
-        ROS_INFO("#3 : CROP LIDAR POINTS done");
+        ROS_INFO("#2 : CROP LIDAR POINTS done");
 
+        /* DETECT & CLASSIFY OBJECTS */
+
+        detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
+                      yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis);
+        // restart program if no bounding boxes detected
+        if ((dataBuffer.end() - 1)->boundingBoxes.empty())
+        {
+            ROS_WARN("#3 : NO AVALIABLE BOUNDING BOXES ARE DETECTED!");
+            dataBuffer.clear();
+            continue;
+        }
+        
+
+        ROS_INFO("#3 : DETECT & CLASSIFY OBJECTS done");
 
         /* CLUSTER LIDAR POINT CLOUD */
 
@@ -148,10 +154,10 @@ int main(int argc, char *argv[])
         clusterLidarWithROI((dataBuffer.end()-1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, cameraExtrinsicMat, cameraMat, distCoeff, imageSize);
 
         // Visualize 3D objects
-        bVis = true;
+        bVis = false;
         if(bVis)
         {
-            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(8.0, 40.0), cv::Size(1200, 800), true);
+            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(8.0, 40.0), cv::Size(1600, 1000), true);
         }
         bVis = false;
 
@@ -299,16 +305,19 @@ int main(int argc, char *argv[])
                         showLidarImgOverlay(visImg, currBB->lidarPoints, cameraExtrinsicMat, cameraMat, distCoeff, imageSize, &visImg);
                         cv::rectangle(visImg, cv::Point(currBB->roi.x, currBB->roi.y), cv::Point(currBB->roi.x + currBB->roi.width, currBB->roi.y + currBB->roi.height), cv::Scalar(0, 255, 0), 2);
                         
-                        char str[200];
-                        sprintf(str, "TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
-                        putText(visImg, str, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
-                        ROS_INFO("TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
+                        char strLidar[100];
+                        char strCamera[100];
+                        sprintf(strLidar, "TTC Lidar : %f s", ttcLidar);
+                        sprintf(strCamera, "TTC Camera : %f s", ttcCamera);
+                        putText(visImg, strLidar, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
+                        putText(visImg, strCamera, cv::Point2f(80, 80), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
+                        ROS_INFO("*****TTC Lidar : %f s, TTC Camera : %f s*****", ttcLidar, ttcCamera);
 
                         string windowName = "Final Results : TTC";
                         cv::namedWindow(windowName, 4);
                         cv::imshow(windowName, visImg);
                         ROS_INFO("Press key to continue to next frame");
-                        cv::waitKey(0); // if (cv::waitKey(10) >= 0) break;
+                        //cv::waitKey(0); // if (cv::waitKey(10) >= 0) break;
                     }
                     bVis = false;
 
