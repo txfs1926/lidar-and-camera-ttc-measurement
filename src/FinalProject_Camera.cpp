@@ -40,18 +40,18 @@ int main(int argc, char *argv[])
 
     // camera
     cv::VideoCapture cap(2); // open the camera
-    int imgStepWidth = 1; 
+    int imgStepWidth = 1;
 
-    string detectorName = "AKAZE";
-    string descriptorName = "SIFT"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+    string detectorName = "AKAZE"; // SHITOMASI, HARRIS, AKAZE, FAST, BRISK, ORB, SIFT
+    string descriptorName = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
 
     // object detection
-    string yoloBasePath = "/home/txfs1926/ttc_ws/src/ttc_measurement/dat/yolo/";//dataPath + "dat/yolo/";
+    string yoloBasePath = "/home/txfs1926/ttc_ws/src/ttc_measurement/dat/yolo/"; //dataPath + "dat/yolo/";
     string yoloClassesFile = yoloBasePath + "coco.names";
     string yoloModelConfiguration = yoloBasePath + "yolov3.cfg";
     string yoloModelWeights = yoloBasePath + "yolov3.weights";
     float confThreshold = 0.2;
-    float nmsThreshold = 0.4; 
+    float nmsThreshold = 0.4;
 
     // Lidar
 
@@ -76,9 +76,9 @@ int main(int argc, char *argv[])
     // misc
     double sensorFrameRate = 10.0 / imgStepWidth; // frames per second for Lidar and camera (10FPS -> delta_t = 0.1)
                                                   // TODO: replace this with real FPS
-    int dataBufferSize = 3;       // no. of images which are held in memory (ring buffer) at the same time
-    vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
-    bool bVis = false;            // visualize results
+    int dataBufferSize = 3;                       // no. of images which are held in memory (ring buffer) at the same time
+    vector<DataFrame> dataBuffer;                 // list of data frames which are held in memory at the same time
+    bool bVis = false;                            // visualize results
     double tDetector = 0, tDescriptor = 0;
 
     /* MAIN LOOP OVER ALL IMAGES */
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
         DataFrame frame;
         frame.cameraImg = img;
         dataBuffer.push_back(frame);
-        if (dataBuffer.size()+1 > dataBufferSize)
+        if (dataBuffer.size() + 1 > dataBufferSize)
         {
             dataBuffer.erase(dataBuffer.begin());
             ROS_INFO("REPLACE IMAGE IN BUFFER done");
@@ -143,7 +143,6 @@ int main(int argc, char *argv[])
             dataBuffer.clear();
             continue;
         }
-        
 
         ROS_INFO("#3 : DETECT & CLASSIFY OBJECTS done");
 
@@ -151,19 +150,18 @@ int main(int argc, char *argv[])
 
         // associate Lidar points with camera-based ROI
         float shrinkFactor = 0.10; // shrinks each bounding box by the given percentage to avoid 3D object merging at the edges of an ROI
-        clusterLidarWithROI((dataBuffer.end()-1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, cameraExtrinsicMat, cameraMat, distCoeff, imageSize);
+        clusterLidarWithROI((dataBuffer.end() - 1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, cameraExtrinsicMat, cameraMat, distCoeff, imageSize);
 
         // Visualize 3D objects
         bVis = false;
-        if(bVis)
+        if (bVis)
         {
-            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(8.0, 40.0), cv::Size(1600, 1000), true);
+            show3DObjects((dataBuffer.end() - 1)->boundingBoxes, cv::Size(8.0, 40.0), cv::Size(1600, 1000), true);
         }
         bVis = false;
 
         ROS_INFO("#4 : CLUSTER LIDAR POINT CLOUD done");
-        
-        
+
         // REMOVE THIS LINE BEFORE PROCEEDING WITH THE FINAL PROJECT
         // continue; // skips directly to the next image without processing what comes beneath
 
@@ -171,22 +169,23 @@ int main(int argc, char *argv[])
 
         // convert current image to grayscale
         cv::Mat imgGray;
-        cv::cvtColor((dataBuffer.end()-1)->cameraImg, imgGray, cv::COLOR_BGR2GRAY);
+        cv::cvtColor((dataBuffer.end() - 1)->cameraImg, imgGray, cv::COLOR_BGR2GRAY);
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        
 
-        if (detectorName.compare("SHITOMASI") == 0){
+        if (detectorName.compare("SHITOMASI") == 0)
+        {
             detKeypointsShiTomasi(keypoints, imgGray, tDetector, bVis);
         }
-        else if(detectorName.compare("HARRIS") == 0){
+        else if (detectorName.compare("HARRIS") == 0)
+        {
             detKeypointsHarris(keypoints, imgGray, tDetector, bVis);
         }
-        else{
-            detKeypointsModern(keypoints,img,detectorName,tDetector,bVis);
+        else
+        {
+            detKeypointsModern(keypoints, img, detectorName, tDetector, bVis);
         }
-
 
         // optional : limit number of keypoints (helpful for debugging and learning)
         bool bLimitKpts = false;
@@ -207,12 +206,11 @@ int main(int argc, char *argv[])
 
         ROS_INFO("#5 : DETECT KEYPOINTS done");
 
-
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
         cv::Mat descriptors;
-        
-        if(descriptorName.compare("AKAZE") == 0 && detectorName.compare(descriptorName) != 0)
+
+        if (descriptorName.compare("AKAZE") == 0 && detectorName.compare(descriptorName) != 0)
         {
             ROS_ERROR("Akaze descriptors can be used only with Akaze/Kaze Keypoints");
             return -1;
@@ -224,7 +222,6 @@ int main(int argc, char *argv[])
 
         ROS_INFO("#6 : EXTRACT DESCRIPTORS done");
 
-
         if (dataBuffer.size() > 1) // wait until at least two images have been processed
         {
 
@@ -233,7 +230,7 @@ int main(int argc, char *argv[])
             vector<cv::DMatch> matches;
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
             string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
+            string selectorType = "SEL_KNN";      // SEL_NN, SEL_KNN
 
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
@@ -244,20 +241,18 @@ int main(int argc, char *argv[])
 
             ROS_INFO("#7 : MATCH KEYPOINT DESCRIPTORS done");
 
-            
             /* TRACK 3D OBJECT BOUNDING BOXES */
 
             //// STUDENT ASSIGNMENT
             //// TASK FP.1 -> match list of 3D objects (vector<BoundingBox>) between current and previous frame (implement ->matchBoundingBoxes)
             map<int, int> bbBestMatches;
-            matchBoundingBoxes(matches, bbBestMatches, *(dataBuffer.end()-2), *(dataBuffer.end()-1)); // associate bounding boxes between current and previous frame using keypoint matches
+            matchBoundingBoxes(matches, bbBestMatches, *(dataBuffer.end() - 2), *(dataBuffer.end() - 1)); // associate bounding boxes between current and previous frame using keypoint matches
             //// EOF STUDENT ASSIGNMENT
 
             // store matches in current data frame
-            (dataBuffer.end()-1)->bbMatches = bbBestMatches;
+            (dataBuffer.end() - 1)->bbMatches = bbBestMatches;
 
             ROS_INFO("#8 : TRACK 3D OBJECT BOUNDING BOXES done");
-
 
             /* COMPUTE TTC ON OBJECT IN FRONT */
 
@@ -282,11 +277,11 @@ int main(int argc, char *argv[])
                     }
                 }
                 // compute TTC for current match
-                if( currBB->lidarPoints.size()>0 && prevBB->lidarPoints.size()>0 ) // only compute TTC if we have Lidar points
+                if (currBB->lidarPoints.size() > 0 && prevBB->lidarPoints.size() > 0) // only compute TTC if we have Lidar points
                 {
                     //// STUDENT ASSIGNMENT
                     //// TASK FP.2 -> compute time-to-collision based on Lidar data (implement -> computeTTCLidar)
-                    double ttcLidar; 
+                    double ttcLidar;
                     computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
                     //// EOF STUDENT ASSIGNMENT
 
@@ -294,7 +289,7 @@ int main(int argc, char *argv[])
                     //// TASK FP.3 -> assign enclosed keypoint matches to bounding box (implement -> clusterKptMatchesWithROI)
                     //// TASK FP.4 -> compute time-to-collision based on camera (implement -> computeTTCCamera)
                     double ttcCamera;
-                    clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);                    
+                    clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);
                     computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
                     //// EOF STUDENT ASSIGNMENT
 
@@ -304,31 +299,30 @@ int main(int argc, char *argv[])
                         cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
                         showLidarImgOverlay(visImg, currBB->lidarPoints, cameraExtrinsicMat, cameraMat, distCoeff, imageSize, &visImg);
                         cv::rectangle(visImg, cv::Point(currBB->roi.x, currBB->roi.y), cv::Point(currBB->roi.x + currBB->roi.width, currBB->roi.y + currBB->roi.height), cv::Scalar(0, 255, 0), 2);
-                        
+
                         char strLidar[100];
                         char strCamera[100];
                         sprintf(strLidar, "TTC Lidar : %f s", ttcLidar);
                         sprintf(strCamera, "TTC Camera : %f s", ttcCamera);
-                        putText(visImg, strLidar, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
-                        putText(visImg, strCamera, cv::Point2f(80, 80), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
+                        putText(visImg, strLidar, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0, 0, 255));
+                        putText(visImg, strCamera, cv::Point2f(80, 80), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0, 0, 255));
                         ROS_INFO("*****TTC Lidar : %f s, TTC Camera : %f s*****", ttcLidar, ttcCamera);
 
                         string windowName = "Final Results : TTC";
                         cv::namedWindow(windowName, 4);
                         cv::imshow(windowName, visImg);
                         ROS_INFO("Press key to continue to next frame");
-                        //cv::waitKey(0); //
-                        if (cv::waitKey(1) >= 0) break;
+                        cv::waitKey(0); 
+                        //if (cv::waitKey(1) >= 0) break;
                     }
                     bVis = false;
 
                 } // eof TTC computation
-            } // eof loop over all BB matches            
-
+            }     // eof loop over all BB matches
         }
         t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
         t = t * 1000 / 1.0;
-        double fps = 1/t;
+        double fps = 1 / t;
         ROS_INFO("FPS = %f", fps);
 
     } // eof loop over all images

@@ -199,8 +199,6 @@ void showLidarImgOverlay(cv::Mat &img, std::vector<LidarPoint> &lidarPoints, con
         maxVal = maxVal < it->x ? it->x : maxVal;
     }
 
-    cv::Mat X(4, 1, cv::DataType<double>::type);
-    cv::Mat Y(3, 1, cv::DataType<double>::type);
     for (auto it = lidarPoints.begin(); it != lidarPoints.end(); ++it)
     {
 
@@ -222,10 +220,12 @@ void showLidarImgOverlay(cv::Mat &img, std::vector<LidarPoint> &lidarPoints, con
         double r2 = tmpx * tmpx + tmpy * tmpy;
         double tmpdist = 1 + distCoeff.at<double>(0) * r2 + distCoeff.at<double>(1) * r2 * r2 + distCoeff.at<double>(4) * r2 * r2 * r2;
 
-        pt.x = tmpx * tmpdist + 2 * distCoeff.at<double>(2) * tmpx * tmpy + distCoeff.at<double>(3) * (r2 + 2 * tmpx * tmpx);
-        pt.y = tmpy * tmpdist + distCoeff.at<double>(2) * (r2 + 2 * tmpy * tmpy) + 2 * distCoeff.at<double>(3) * tmpx * tmpy;
-        pt.x = cameraMat.at<double>(0, 0) * pt.x + cameraMat.at<double>(0, 2);
-        pt.y = cameraMat.at<double>(1, 1) * pt.y + cameraMat.at<double>(1, 2);
+        tmpx = tmpx * tmpdist + 2 * distCoeff.at<double>(2) * tmpx * tmpy + distCoeff.at<double>(3) * (r2 + 2 * tmpx * tmpx);
+        tmpy = tmpy * tmpdist + distCoeff.at<double>(2) * (r2 + 2 * tmpy * tmpy) + 2 * distCoeff.at<double>(3) * tmpx * tmpy;
+        tmpx = cameraMat.at<double>(0, 0) * tmpx + cameraMat.at<double>(0, 2);
+        tmpy = cameraMat.at<double>(1, 1) * tmpy + cameraMat.at<double>(1, 2);
+        pt.x = tmpx;
+        pt.y = tmpy;
 
         float val = it->x;
         int red = min(255, (int)(255 * abs((val - maxVal) / maxVal)));

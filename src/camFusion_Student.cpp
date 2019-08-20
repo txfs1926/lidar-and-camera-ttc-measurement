@@ -108,10 +108,12 @@ void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<Li
         double r2 = tmpx * tmpx + tmpy * tmpy;
         double tmpdist = 1 + distCoeff.at<double>(0) * r2 + distCoeff.at<double>(1) * r2 * r2 + distCoeff.at<double>(4) * r2 * r2 * r2;
 
-        pt.x = tmpx * tmpdist + 2 * distCoeff.at<double>(2) * tmpx * tmpy + distCoeff.at<double>(3) * (r2 + 2 * tmpx * tmpx);
-        pt.y = tmpy * tmpdist + distCoeff.at<double>(2) * (r2 + 2 * tmpy * tmpy) + 2 * distCoeff.at<double>(3) * tmpx * tmpy;
-        pt.x = cameraMat.at<double>(0, 0) * pt.x + cameraMat.at<double>(0, 2);
-        pt.y = cameraMat.at<double>(1, 1) * pt.y + cameraMat.at<double>(1, 2);
+        tmpx = tmpx * tmpdist + 2 * distCoeff.at<double>(2) * tmpx * tmpy + distCoeff.at<double>(3) * (r2 + 2 * tmpx * tmpx);
+        tmpy = tmpy * tmpdist + distCoeff.at<double>(2) * (r2 + 2 * tmpy * tmpy) + 2 * distCoeff.at<double>(3) * tmpx * tmpy;
+        tmpx = cameraMat.at<double>(0, 0) * tmpx + cameraMat.at<double>(0, 2);
+        tmpy = cameraMat.at<double>(1, 1) * tmpy + cameraMat.at<double>(1, 2);
+        pt.x = tmpx;
+        pt.y = tmpy;
 
         // if(0 <= pt.x && pt.x < imageSize.width && 0 <= pt.y && pt.y < imageSize.height)
         vector<vector<BoundingBox>::iterator> enclosingBoxes; // pointers to all bounding boxes which enclose the current Lidar point
