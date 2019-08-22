@@ -306,6 +306,8 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     // auxiliary variables
     double dT = 1/frameRate;        // time between two measurements in seconds
     double laneWidth = 2.0; // assumed width of the ego lane
+    double x; // x coordinates (absolutely)
+    // TODO: Consider to remove 2 lines below.
     std::vector<LidarPoint> prevFiltered = RansacPlane(lidarPointsPrev,200,0.22);
     std::vector<LidarPoint> currFiltered = RansacPlane(lidarPointsCurr,200,0.22);
 
@@ -315,36 +317,21 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     double minXPrev = 1e9, minXCurr = 1e9;
     for (auto it = prevFiltered.begin(); it != prevFiltered.end(); ++it)
     {
-        
+        x=abs(it->x);
         if (abs(it->y) <= laneWidth / 2.0)
         { // 3D point within ego lane?
-            minXPrev = minXPrev > it->x ? it->x : minXPrev;
+            minXPrev = minXPrev > x ? x : minXPrev;
         }
     }
 
     for (auto it = currFiltered.begin(); it != currFiltered.end(); ++it)
     {
-
+        x=abs(it->x);
         if (abs(it->y) <= laneWidth / 2.0)
         { // 3D point within ego lane?
-            minXCurr = minXCurr > it->x ? it->x : minXCurr;
+            minXCurr = minXCurr > x ? x : minXCurr;
         }
     }
-    //double minXPrev = 0.0, minXCurr = 0.0;
-    // std::vector<double> xValuesPrev, xValuesCurr;
-    // for(int i=0; i<prevFiltered.size(); i++){
-    //     xValuesPrev.push_back(prevFiltered[i].x);
-    // }
-    // minXPrev = *std::min_element(xValuesPrev.begin(), xValuesPrev.end());
-
-    // for(int i=0; i<currFiltered.size(); i++){
-    //     xValuesCurr.push_back(currFiltered[i].x);
-    // }
-    // minXCurr = *std::min_element(xValuesCurr.begin(), xValuesCurr.end());
-
-    //std::cout << minXPrev << "," << minXCurr << std::endl;
-
-    // compute TTC from both measurements
     TTC = minXCurr * dT / (minXPrev - minXCurr);
 }
 
