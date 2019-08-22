@@ -42,5 +42,3 @@ Then run:
 
 ## TODOs
 Please refer TODOs in source code files.
-
-`parameters.yaml` contains the sample intrinsic and external parameters which have not been implemented in the source code yet.
