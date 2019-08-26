@@ -21,11 +21,14 @@
   
 ## Device
 * Camera (Logitech C920 PRO HD Webcam@640×480px, 60fps)
-* LiDAR (Leishen-lidar C16 from Shenzhen Leishen Intelligence System Co, Ltd.)
+* LiDAR (Leishen-lidar C16 from Shenzhen Leishen Intelligence System Co, Ltd., [Driver](https://github.com/tongsky723/lslidar_C16))
   
 ## Usage
-Note that the weight file under folder dat/yolo/ is a dummy file. Open `dat/yolo/yolo.weight` via your code editor and follow the procedure to download the true pre-trained weight. 
-Make sure that USB camera and LiDAR are connected and LiDAR driver is working properly. (For `lslidar_c16` please refer [the insturction](https://blog.csdn.net/learning_tortosie/article/details/84679149). In addition, edit `cv::VideoCapture cap(2);` to setup your camera.
+Make sure that USB camera and LiDAR are connected and LiDAR driver is working properly. (For `lslidar_c16` please refer [the insturction](https://blog.csdn.net/learning_tortosie/article/details/84679149) to better prepare for your LiDAR. In addition, edit `cv::VideoCapture cap(2);` to setup your camera.
+### Note
+1) The weight file under folder dat/yolo/ is a dummy file. Open `dat/yolo/yolo.weight` via your code editor and follow the procedure to download the true pre-trained weight to replace the existed dummy file. 
+
+2) If you would like to try out this program with your sensors, please replace with your calibration parameters in the file `dat/calibration.yaml` first.
 
 Then run:
 
