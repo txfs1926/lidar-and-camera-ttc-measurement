@@ -20,8 +20,8 @@
   * All OSes: [click here for installation instructions](http://wiki.ros.org/ROS/Installation) (ROS Kinetic is recommended)
   
 ## Device
-* Camera
-* LiDAR
+* Camera (Logitech C920 PRO HD Webcam@640×480px, 60fps)
+* LiDAR (Leishen-lidar C16 from Shenzhen Leishen Intelligence System Co, Ltd.)
   
 ## Usage
 Note that the weight file under folder dat/yolo/ is a dummy file. Open `dat/yolo/yolo.weight` via your code editor and follow the procedure to download the true pre-trained weight. 
